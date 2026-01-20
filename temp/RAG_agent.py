@@ -61,8 +61,24 @@ retriever_tool.invoke({"query": "types of reward hacking"})
 from langgraph.graph import MessagesState
 from langchain_deepseek.chat_models import ChatDeepSeek
 
-response_model = ChatDeepSeek(model="deepseek-chat")
+# response_model = ChatDeepSeek(model="deepseek-chat")
+# from langchain_openai import ChatOpenAI
 
+# response_model = ChatOpenAI(
+#     temperature=0.6,
+#     model="glm-4.5v",
+#     openai_api_key="e0b34dda8da544a49baf7b42deaad63c.MHSryou4GDu0cxnC",
+#     openai_api_base="https://open.bigmodel.cn/api/paas/v4/"
+# )
+
+from langchain_community.chat_models import ChatZhipuAI
+
+response_model = ChatZhipuAI(
+    model="glm-4.5v",  # 或 "glm-4"
+    api_key="e0b34dda8da544a49baf7b42deaad63c.MHSryou4GDu0cxnC",
+    temperature=0.6,
+    streaming=False
+)
 
 def generate_query_or_respond(state: MessagesState):
     """Call the model to generate a response based on the current state. Given
@@ -75,18 +91,18 @@ def generate_query_or_respond(state: MessagesState):
     return {"messages": [response]}
 
 
-input = {"messages": [{"role": "user", "content": "hello!"}]}
-generate_query_or_respond(input)["messages"][-1].pretty_print()
+# input = {"messages": [{"role": "user", "content": "hello!"}]}
+# generate_query_or_respond(input)["messages"][-1].pretty_print()
 
-input = {
-    "messages": [
-        {
-            "role": "user",
-            "content": "What does Lilian Weng say about types of reward hacking?",
-        }
-    ]
-}
-generate_query_or_respond(input)["messages"][-1].pretty_print()
+# input = {
+#     "messages": [
+#         {
+#             "role": "user",
+#             "content": "What does Lilian Weng say about types of reward hacking?",
+#         }
+#     ]
+# }
+# generate_query_or_respond(input)["messages"][-1].pretty_print()
 
 
 
@@ -143,60 +159,60 @@ def grade_documents(
 
 from langchain_core.messages import convert_to_messages
 
-input = {
-    "messages": convert_to_messages(
-        [
-            {
-                "role": "user",
-                "content": "What does Lilian Weng say about types of reward hacking?",
-            },
-            {
-                "role": "assistant",
-                "content": "",
-                "tool_calls": [
-                    {
-                        "id": "1",
-                        "name": "retrieve_blog_posts",
-                        "args": {"query": "types of reward hacking"},
-                    }
-                ],
-            },
-            {"role": "tool", "content": "meow", "tool_call_id": "1"},
-        ]
-    )
-}
-grade_documents(input)
+# input = {
+#     "messages": convert_to_messages(
+#         [
+#             {
+#                 "role": "user",
+#                 "content": "What does Lilian Weng say about types of reward hacking?",
+#             },
+#             {
+#                 "role": "assistant",
+#                 "content": "",
+#                 "tool_calls": [
+#                     {
+#                         "id": "1",
+#                         "name": "retrieve_blog_posts",
+#                         "args": {"query": "types of reward hacking"},
+#                     }
+#                 ],
+#             },
+#             {"role": "tool", "content": "meow", "tool_call_id": "1"},
+#         ]
+#     )
+# }
+# grade_documents(input)
 
 
 
 
-input = {
-    "messages": convert_to_messages(
-        [
-            {
-                "role": "user",
-                "content": "What does Lilian Weng say about types of reward hacking?",
-            },
-            {
-                "role": "assistant",
-                "content": "",
-                "tool_calls": [
-                    {
-                        "id": "1",
-                        "name": "retrieve_blog_posts",
-                        "args": {"query": "types of reward hacking"},
-                    }
-                ],
-            },
-            {
-                "role": "tool",
-                "content": "reward hacking can be categorized into two types: environment or goal misspecification, and reward tampering",
-                "tool_call_id": "1",
-            },
-        ]
-    )
-}
-grade_documents(input)
+# input = {
+#     "messages": convert_to_messages(
+#         [
+#             {
+#                 "role": "user",
+#                 "content": "What does Lilian Weng say about types of reward hacking?",
+#             },
+#             {
+#                 "role": "assistant",
+#                 "content": "",
+#                 "tool_calls": [
+#                     {
+#                         "id": "1",
+#                         "name": "retrieve_blog_posts",
+#                         "args": {"query": "types of reward hacking"},
+#                     }
+#                 ],
+#             },
+#             {
+#                 "role": "tool",
+#                 "content": "reward hacking can be categorized into two types: environment or goal misspecification, and reward tampering",
+#                 "tool_call_id": "1",
+#             },
+#         ]
+#     )
+# }
+# grade_documents(input)
 
 
 
@@ -225,31 +241,31 @@ def rewrite_question(state: MessagesState):
 
 
 
-input = {
-    "messages": convert_to_messages(
-        [
-            {
-                "role": "user",
-                "content": "What does Lilian Weng say about types of reward hacking?",
-            },
-            {
-                "role": "assistant",
-                "content": "",
-                "tool_calls": [
-                    {
-                        "id": "1",
-                        "name": "retrieve_blog_posts",
-                        "args": {"query": "types of reward hacking"},
-                    }
-                ],
-            },
-            {"role": "tool", "content": "meow", "tool_call_id": "1"},
-        ]
-    )
-}
+# input = {
+#     "messages": convert_to_messages(
+#         [
+#             {
+#                 "role": "user",
+#                 "content": "What does Lilian Weng say about types of reward hacking?",
+#             },
+#             {
+#                 "role": "assistant",
+#                 "content": "",
+#                 "tool_calls": [
+#                     {
+#                         "id": "1",
+#                         "name": "retrieve_blog_posts",
+#                         "args": {"query": "types of reward hacking"},
+#                     }
+#                 ],
+#             },
+#             {"role": "tool", "content": "meow", "tool_call_id": "1"},
+#         ]
+#     )
+# }
 
-response = rewrite_question(input)
-print(response["messages"][-1].content)
+# response = rewrite_question(input)
+# print(response["messages"][-1].content)
 
 
 
@@ -276,35 +292,35 @@ def generate_answer(state: MessagesState):
 
 
 
-input = {
-    "messages": convert_to_messages(
-        [
-            {
-                "role": "user",
-                "content": "What does Lilian Weng say about types of reward hacking?",
-            },
-            {
-                "role": "assistant",
-                "content": "",
-                "tool_calls": [
-                    {
-                        "id": "1",
-                        "name": "retrieve_blog_posts",
-                        "args": {"query": "types of reward hacking"},
-                    }
-                ],
-            },
-            {
-                "role": "tool",
-                "content": "reward hacking can be categorized into two types: environment or goal misspecification, and reward tampering",
-                "tool_call_id": "1",
-            },
-        ]
-    )
-}
+# input = {
+#     "messages": convert_to_messages(
+#         [
+#             {
+#                 "role": "user",
+#                 "content": "What does Lilian Weng say about types of reward hacking?",
+#             },
+#             {
+#                 "role": "assistant",
+#                 "content": "",
+#                 "tool_calls": [
+#                     {
+#                         "id": "1",
+#                         "name": "retrieve_blog_posts",
+#                         "args": {"query": "types of reward hacking"},
+#                     }
+#                 ],
+#             },
+#             {
+#                 "role": "tool",
+#                 "content": "reward hacking can be categorized into two types: environment or goal misspecification, and reward tampering",
+#                 "tool_call_id": "1",
+#             },
+#         ]
+#     )
+# }
 
-response = generate_answer(input)
-response["messages"][-1].pretty_print()
+# response = generate_answer(input)
+# response["messages"][-1].pretty_print()
 
 
 
@@ -350,17 +366,17 @@ graph = workflow.compile()
 
 
 # 8.Run the agentic RAG
-for chunk in graph.stream(
-    {
-        "messages": [
-            {
-                "role": "user",
-                "content": "What does Lilian Weng say about types of reward hacking?",
-            }
-        ]
-    }
-):
-    for node, update in chunk.items():
-        print("Update from node", node)
-        update["messages"][-1].pretty_print()
-        print("\n\n")
+# for chunk in graph.stream(
+#     {
+#         "messages": [
+#             {
+#                 "role": "user",
+#                 "content": "What does Lilian Weng say about types of reward hacking?",
+#             }
+#         ]
+#     }
+# ):
+#     for node, update in chunk.items():
+#         print("Update from node", node)
+#         update["messages"][-1].pretty_print()
+#         print("\n\n")
