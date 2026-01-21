@@ -1,7 +1,7 @@
 {
     "dependencies": ["./"],
     "graphs": {
-        "Upload_agent": "./temp/Upload_agent.py:agent"
+        "app": "./graph/graph.py:app"
     },
     "env": ".env"
 }
