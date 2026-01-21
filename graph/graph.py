@@ -1,24 +1,8 @@
 from langgraph.graph import StateGraph, END, START
-from typing import TypedDict, Annotated, Sequence, Literal, List
-from langchain_core.messages import BaseMessage, HumanMessage, AIMessage
-from langgraph.graph.message import add_messages
+from langchain_core.messages import HumanMessage, AIMessage
 from langchain_deepseek import ChatDeepSeek
-from pydantic import BaseModel
 from agents import Agent_Insighter_Reporter
-
-class AgentState(TypedDict):
-    messages: Annotated[Sequence[BaseMessage], add_messages]
-    next: str   # Next agent
-    task_completed: bool      # Flag indicating if the current task is completed
-    pending_tasks: List[str]    # List of pending tasks for the agent
-    current_task: str         # Current task being processed
-
-class RouteResponse(BaseModel):
-    next: Literal["Agent_Insighter_Reporter", "FINISH"]
-    reasoning : str
-    pending_tasks: List[str] = []
-
-
+from state.state import AgentState, RouteResponse
 def Orchestrator_node(state: AgentState) -> AgentState:
     # Orchestrator logic to manage workflow
     messages = state.get("messages", [])
