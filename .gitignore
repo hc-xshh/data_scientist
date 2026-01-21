@@ -76,11 +76,11 @@ ENV/
 .DS_Store
 
 # Project specific
-outputs/dashboard/*
+outputs/*
 !outputs/dashboard/.gitkeep
 *.log
 *.tmp
-.langgraph_api/
+.langgraph_api/*
 
 # Data files (uncomment if needed)
 # *.csv

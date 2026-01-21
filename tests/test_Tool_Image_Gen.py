@@ -2,7 +2,7 @@ import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from tools.image_gen import image_gen_tool
+from tools.Tool_Image_Gen import image_gen_tool
 
 def test_image_generation():
     """测试图像生成工具"""
