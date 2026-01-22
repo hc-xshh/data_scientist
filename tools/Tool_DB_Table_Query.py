@@ -2,6 +2,7 @@ from sqlalchemy import create_engine, inspect
 from langchain.tools import BaseTool
 from pydantic import BaseModel, Field
 from typing import Type, List
+from config import settings
 
 # 1. 定义输入模型
 class QueryDBTablesInput(BaseModel):
@@ -46,7 +47,7 @@ if __name__ == "__main__":
     tool = QueryDBTablesTool()
     
     result = tool._run(
-        db_uri="mysql+pymysql://root:123456@8.137.22.234:3306/lc_db"
+        db_uri=f"mysql+pymysql://{settings.db_user}:{settings.db_password}@{settings.db_host}:{settings.db_port}/{settings.db_name}"
     )
     
     print(result)
