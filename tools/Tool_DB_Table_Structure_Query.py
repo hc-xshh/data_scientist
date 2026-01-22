@@ -2,6 +2,7 @@ from sqlalchemy import create_engine, inspect
 from langchain.tools import BaseTool
 from pydantic import BaseModel, Field
 from typing import Type, List
+from config import settings
 
 # 1. 定义输入模型
 class QueryDBSchemaInput(BaseModel):
@@ -48,8 +49,8 @@ class QueryDBSchemaTool(BaseTool):
         except Exception as e:
             return f"查询表结构失败: {str(e)}"
 
-    async def _arun(self, db_uri: str, table_names: List[str]) -> str:
-        raise NotImplementedError("异步模式未实现。")
+    # async def _arun(self, db_uri: str, table_names: List[str]) -> str:
+    #     raise NotImplementedError("异步模式未实现。")
 
 # --- 3. 使用示例 ---
 if __name__ == "__main__":
@@ -57,7 +58,7 @@ if __name__ == "__main__":
     
     # 模拟查询 'users' 和 'orders' 这两张表的结构
     result = tool._run(
-        db_uri="mysql+pymysql://root:123456@8.137.22.234:3306/lc_db",
+        db_uri=f"mysql+pymysql://{settings.db_user}:{settings.db_password}@{settings.db_host}:{settings.db_port}/{settings.db_name}",
         table_names=["全国黑名单列表", "案件查询列表", "零售户信息查询"] # 这里是你关心的表
     )
     

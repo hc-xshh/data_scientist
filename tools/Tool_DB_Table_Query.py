@@ -38,8 +38,8 @@ class QueryDBTablesTool(BaseTool):
         except Exception as e:
             return f"查询失败！无法连接数据库或发生错误: {str(e)}"
 
-    async def _arun(self, db_uri: str) -> str:
-        raise NotImplementedError("异步模式未实现。")
+    # async def _arun(self, db_uri: str) -> str:
+    #     raise NotImplementedError("异步模式未实现。")
 
 # --- 3. 使用示例 ---
 
