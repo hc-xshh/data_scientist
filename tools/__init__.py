@@ -1,9 +1,9 @@
 from .Tool_Image_Gen import image_gen_tool
-from .Tool_DB_Table_Query import QueryDBTablesTool
-from .Tool_DB_Table_Structure_Query import QueryDBSchemaTool
+from .Tool_DBM import get_tables_from_db, get_table_schema, run_db_query
 
 __all__ = [
     "image_gen_tool",
-    "QueryDBTablesTool",
-    "QueryDBSchemaTool",
+    "get_tables_from_db",
+    "get_table_schema",
+    "run_db_query",
 ]
