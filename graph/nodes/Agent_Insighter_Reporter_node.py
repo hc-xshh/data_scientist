@@ -17,7 +17,11 @@ def Agent_Insighter_Reporter_node(state: AgentState) -> AgentState:
     
     if context_parts:
         context_msg = HumanMessage(
-            content=f"请基于以下分析结果生成可视化大屏草图:\n\n{chr(10).join(reversed(context_parts))}\n\n生成一个专业、美观的数据大屏设计。"
+            content=f"""
+            请基于以下分析结果生成可视化大屏草图:\n\n
+            {chr(10).join(reversed(context_parts))}
+            \n\n生成一个专业、美观的数据大屏设计。
+            """
         )
         messages = list(messages) + [context_msg]
 
