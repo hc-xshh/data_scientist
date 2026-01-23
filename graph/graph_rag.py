@@ -12,8 +12,10 @@ def route_orchestrator(state: AgentState) -> str:
     # 直接从state中读取next字段
     next_node = state.get("next", "FINISH")
     
-    # 如果next_node为空或者是"FINISH"，则结束
-    if not next_node or next_node == "FINISH":
+    # 添加有效节点验证
+    valid_nodes = {"Agent_Data_Explorer", "Agent_Insighter_Reporter", "Agent_RAG", "FINISH"}
+
+    if not next_node or next_node not in valid_nodes:
         return "FINISH"
     
     return next_node
