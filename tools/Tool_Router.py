@@ -12,10 +12,10 @@ class RouteToReporter(BaseModel):
     reason: str = Field(description="为什么需要生成报告")
     visualization_type: str = Field(description="可视化类型：大屏/图表/报告等")
 
-class RouteToQA(BaseModel):
-    """路由到问答Agent的参数"""
-    reason: str = Field(description="为什么是日常问答")
-    question_type: str = Field(description="问题类型")
+class RouteToRAG(BaseModel):
+    """路由到RAG问答Agent的参数"""
+    reason: str = Field(description="为什么需要RAG问答")
+    question_type: str = Field(description="问题类型：文档查询/知识问答等")
 
 class FinishTask(BaseModel):
     """结束任务的参数"""
@@ -52,18 +52,17 @@ def route_to_reporter(reason: str, visualization_type: str) -> str:
     """
     return f"ROUTE:Agent_Insighter_Reporter|{reason}|{visualization_type}"
 
-@tool(args_schema=RouteToQA)
-def route_to_qa(reason: str, question_type: str) -> str:
+@tool(args_schema=RouteToRAG)
+def route_to_rag(reason: str, question_type: str) -> str:
     """
-    当用户提出日常问答、通用咨询问题时调用此工具。
+    当用户询问本地知识库相关问题时调用此工具。
     
     适用场景：
-    - 不涉及数据分析的普通问题
-    - 概念解释
-    - 技术咨询
-    - 闲聊对话
+    - 查询本地文档内容
+    - 基于知识库的问答
+    - 文档相关的咨询
     """
-    return f"ROUTE:QA_Agent|{reason}|{question_type}"
+    return f"ROUTE:Agent_RAG|{reason}|{question_type}"
 
 @tool(args_schema=FinishTask)
 def finish_task(reason: str, summary: str) -> str:
@@ -77,11 +76,10 @@ def finish_task(reason: str, summary: str) -> str:
     """
     return f"ROUTE:FINISH|{reason}|{summary}"
 
-
 # 导出所有路由工具
 routing_tools = [
     route_to_data_explorer,
     route_to_reporter,
-    route_to_qa,
+    route_to_rag,
     finish_task
 ]

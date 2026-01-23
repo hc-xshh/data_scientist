@@ -55,31 +55,3 @@ class AgentState(TypedDict):
     pending_tasks: List[str]    # 待处理任务的列表
     current_task: str         # 当前正在处理的任务描述
 
-
-# class RouteResponse(BaseModel):
-#     """
-#     路由响应类
-    
-#     用于定义Agent路由决策的响应结构，特别是用于Orchestrator等协调Agent做出路由决策时。
-#     使用Pydantic模型可以自动进行数据验证和类型检查。
-    
-#     属性说明：
-#         next: 下一个节点的路由目标
-#             - 使用Literal类型限定只能是特定的几个值
-#             - "Agent_Insighter_Reporter": 路由到洞察报告生成Agent
-#             - "FINISH": 表示工作流结束，不再继续执行
-#             - 这种限定可以在编译时捕获错误的路由目标
-        
-#         reasoning: 路由决策的推理过程
-#             - 字符串类型，解释为什么选择这个路由方向
-#             - 用于调试、日志记录和提高系统的可解释性
-#             - 例如: "所有数据分析任务已完成，需要生成最终报告"
-        
-#         pending_tasks: 剩余待处理任务列表
-#             - 可选字段，默认为空列表
-#             - 记录在路由决策时识别出的尚未完成的任务
-#             - 帮助Orchestrator跟踪整体工作进度
-#     """
-#     next: Literal["Agent_Insighter_Reporter", "FINISH"]  # 路由目标：报告生成Agent或结束
-#     reasoning: str  # 路由决策的理由说明
-#     pending_tasks: List[str] = []  # 剩余的待处理任务，默认为空列表
