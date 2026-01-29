@@ -7,14 +7,16 @@ from langchain.tools import tool
 from langchain.agents import create_agent
 from langchain_deepseek import ChatDeepSeek
 from agents.Agent_HTML_Gen import agent as html_gen_agent
+from prompts import InsighterReporterPrompt
 
 @tool
 def html_gen(request: str) -> str:
-    """Generate HTML pages using natural language.
+    """使用自然语言生成HTML页面。
 
-    Use this when the user wants to create or modify web pages. Handles HTML, CSS, and JavaScript generation.
+    当用户想要创建或修改网页时使用此功能。处理HTML、CSS和JavaScript的生成。
 
-    Input: Natural language request for HTML page creation or modification (e.g., 'create a landing page with a hero section')
+    输入：用于HTML页面创建或修改的自然语言请求（
+    例如，“为一家叫翻转的 AI 初创公司制作一个惊艳的、生产级的落地页面。风格要求：暗黑模式、发光渐变、毛玻璃特效。”）
     """
     result = html_gen_agent.invoke({
         "messages": [{"role": "user", "content": request}]
@@ -28,9 +30,4 @@ tools = [
 
 model = ChatDeepSeek(model="deepseek-chat")
 
-prompt = """
-You are an insightful reporter agent that generates data analysis reports and visualizations 
-using tools like matplotlib, seaborn, plotly, and reportlab.
-"""
-
-agent = create_agent(model=model, tools=tools, system_prompt=prompt)
+agent = create_agent(model=model, tools=tools, system_prompt=InsighterReporterPrompt)
