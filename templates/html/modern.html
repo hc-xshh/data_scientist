@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+
+{% block styles %}
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+    
+    :root {
+        --primary-color: #667eea;
+        --secondary-color: #764ba2;
+        --text-dark: #2d3748;
+        --text-light: #718096;
+        --bg-light: #f7fafc;
+        --shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+    
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+        padding: 20px;
+        min-height: 100vh;
+    }
+    
+    .dashboard-container {
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+    
+    .header {
+        background: white;
+        padding: 40px;
+        border-radius: 16px;
+        box-shadow: var(--shadow);
+        margin-bottom: 30px;
+        animation: slideDown 0.5s ease;
+    }
+    
+    @keyframes slideDown {
+        from { opacity: 0; transform: translateY(-20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .header h1 {
+        color: var(--text-dark);
+        font-size: 2.5rem;
+        margin-bottom: 10px;
+        font-weight: 700;
+    }
+    
+    .header .description {
+        color: var(--text-light);
+        font-size: 1.1rem;
+        line-height: 1.6;
+        margin-bottom: 15px;
+    }
+    
+    .meta {
+        padding-top: 15px;
+        border-top: 1px solid #e2e8f0;
+        color: var(--text-light);
+        font-size: 0.9rem;
+        display: flex;
+        gap: 20px;
+        flex-wrap: wrap;
+    }
+    
+    .meta-item {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+    
+    .charts-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+        gap: 30px;
+        margin-bottom: 30px;
+    }
+    
+    .chart-card {
+        background: white;
+        padding: 30px;
+        border-radius: 16px;
+        box-shadow: var(--shadow);
+        transition: all 0.3s ease;
+        animation: fadeIn 0.5s ease;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: scale(0.95); }
+        to { opacity: 1; transform: scale(1); }
+    }
+    
+    .chart-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+    }
+    
+    .chart-title {
+        font-size: 1.4rem;
+        font-weight: 600;
+        color: var(--text-dark);
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid var(--primary-color);
+    }
+    
+    .footer {
+        background: white;
+        padding: 25px;
+        border-radius: 16px;
+        box-shadow: var(--shadow);
+        text-align: center;
+        color: var(--text-light);
+    }
+    
+    .footer strong {
+        color: var(--text-dark);
+    }
+    
+    @media (max-width: 768px) {
+        .charts-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .header h1 {
+            font-size: 2rem;
+        }
+        
+        .header, .chart-card, .footer {
+            padding: 20px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="header">
+        <h1>{{ title }}</h1>
+        <div class="description">{{ description }}</div>
+        <div class="meta">
+            <div class="meta-item">
+                <span>📅</span>
+                <span>生成时间: {{ generated_time }}</span>
+            </div>
+            <div class="meta-item">
+                <span>📊</span>
+                <span>图表数量: {{ charts|length }}</span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="charts-grid">
+        {% for chart in charts %}
+        <div class="chart-card">
+            {% if chart.title %}
+            <div class="chart-title">{{ chart.title }}</div>
+            {% endif %}
+            <div id="chart-{{ loop.index }}"></div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <div class="footer">
+        <p><strong>Powered by Plotly & Python</strong></p>
+        <p style="margin-top: 10px; font-size: 0.9rem;">数据科学家 AI Agent 系统 © 2026</p>
+    </div>
+</div>
+{% endblock %}

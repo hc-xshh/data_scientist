@@ -4,7 +4,8 @@ from graph.nodes import (
     Orchestrator_node, 
     Agent_Insighter_Reporter_node,
     Agent_Data_Explorer_node,
-    Agent_File_Analysis_node
+    Agent_File_Analysis_node,
+    Agent_HTML_Gen_node
 )
 
 def route_orchestrator(state: AgentState) -> str:
@@ -13,7 +14,7 @@ def route_orchestrator(state: AgentState) -> str:
     next_node = state.get("next", "FINISH")
     
     # 添加有效节点验证
-    valid_nodes = {"Agent_Data_Explorer", "Agent_Insighter_Reporter", "Agent_File_Analysis", "FINISH"}
+    valid_nodes = {"Agent_Data_Explorer", "Agent_Insighter_Reporter", "Agent_File_Analysis", "Agent_HTML_Gen", "FINISH"}
 
     if not next_node or next_node not in valid_nodes:
         return "FINISH"
@@ -27,6 +28,7 @@ def create_workflow():
     workflow.add_node("Agent_Data_Explorer", Agent_Data_Explorer_node)
     workflow.add_node("Agent_Insighter_Reporter", Agent_Insighter_Reporter_node)
     workflow.add_node("Agent_File_Analysis", Agent_File_Analysis_node)
+    workflow.add_node("Agent_HTML_Gen", Agent_HTML_Gen_node)
     workflow.add_edge(START, "Orchestrator")
     
     workflow.add_conditional_edges(
@@ -36,6 +38,7 @@ def create_workflow():
             "Agent_Data_Explorer": "Agent_Data_Explorer",
             "Agent_Insighter_Reporter": "Agent_Insighter_Reporter",
             "Agent_File_Analysis": "Agent_File_Analysis",
+            "Agent_HTML_Gen": "Agent_HTML_Gen",
             "FINISH": END
         }
     )
@@ -43,6 +46,7 @@ def create_workflow():
     workflow.add_edge("Agent_Data_Explorer", "Orchestrator")
     workflow.add_edge("Agent_Insighter_Reporter", "Orchestrator")
     workflow.add_edge("Agent_File_Analysis", "Orchestrator")
+    workflow.add_edge("Agent_HTML_Gen", "Orchestrator")
 
     app = workflow.compile()
     return app

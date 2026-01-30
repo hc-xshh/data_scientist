@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{{ title }}{% endblock %}</title>
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    {% block extra_head %}{% endblock %}
+    {% block styles %}{% endblock %}
+</head>
+<body>
+    {% block content %}{% endblock %}
+    {% block scripts %}
+    <script>
+        const plotlyConfig = {
+            responsive: true,
+            displayModeBar: true,
+            modeBarButtonsToRemove: ['lasso2d', 'select2d'],
+            displaylogo: false,
+            toImageButtonOptions: {
+                format: 'png',
+                filename: 'chart',
+                height: 1000,
+                width: 1500,
+                scale: 2
+            }
+        };
+        {% if charts %}
+            {% for chart in charts %}
+            Plotly.newPlot(
+                'chart-{{ loop.index }}',
+                {{ chart.data | safe }},
+                {{ chart.layout | safe }},
+                plotlyConfig
+            );
+            {% endfor %}
+            window.addEventListener('resize', function() {
+                {% for chart in charts %}
+                Plotly.Plots.resize('chart-{{ loop.index }}');
+                {% endfor %}
+            });
+        {% endif %}
+    </script>
+    {% endblock %}
+</body>
+</html>

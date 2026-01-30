@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+
+{% block styles %}
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+    
+    body {
+        font-family: Arial, 'Helvetica Neue', Helvetica, sans-serif;
+        background: #ffffff;
+        padding: 20px;
+        color: #333;
+    }
+    
+    .container {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    
+    .header {
+        margin-bottom: 30px;
+        padding-bottom: 15px;
+        border-bottom: 2px solid #e0e0e0;
+    }
+    
+    .header h1 {
+        font-size: 2rem;
+        color: #333;
+        margin-bottom: 10px;
+    }
+    
+    .header .description {
+        font-size: 1rem;
+        color: #666;
+        margin-bottom: 8px;
+    }
+    
+    .header .meta {
+        font-size: 0.85rem;
+        color: #999;
+    }
+    
+    .chart-item {
+        margin-bottom: 40px;
+        padding: 20px;
+        background: #fafafa;
+        border: 1px solid #e0e0e0;
+        border-radius: 4px;
+    }
+    
+    .chart-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 15px;
+    }
+    
+    .chart-wrapper {
+        background: white;
+        padding: 10px;
+    }
+    
+    .footer {
+        margin-top: 40px;
+        padding-top: 15px;
+        border-top: 1px solid #e0e0e0;
+        text-align: center;
+        font-size: 0.85rem;
+        color: #999;
+    }
+    
+    @media (max-width: 768px) {
+        body {
+            padding: 10px;
+        }
+        
+        .header h1 {
+            font-size: 1.5rem;
+        }
+        
+        .chart-item {
+            padding: 15px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="header">
+        <h1>{{ title }}</h1>
+        <div class="description">{{ description }}</div>
+        <div class="meta">{{ generated_time }} · {{ charts|length }} charts</div>
+    </div>
+    
+    <div class="charts">
+        {% for chart in charts %}
+        <div class="chart-item">
+            {% if chart.title %}
+            <div class="chart-title">{{ chart.title }}</div>
+            {% endif %}
+            <div class="chart-wrapper">
+                <div id="chart-{{ loop.index }}"></div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <div class="footer">
+        Powered by Plotly · Data Scientist AI Agent System
+    </div>
+</div>
+{% endblock %}

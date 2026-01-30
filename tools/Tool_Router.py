@@ -1,6 +1,7 @@
 from langchain_core.tools import tool
 from pydantic import BaseModel, Field
 
+
 # 工具参数定义
 class RouteToDataExplorer(BaseModel):
     """路由到数据探索Agent的参数"""
@@ -18,6 +19,11 @@ class RouteToFileAnalyzer(BaseModel):
     file_type: str = Field(description="文件类型:CSV/Excel/JSON/TXT等")
     analysis_goal: str = Field(description="分析目标")
 
+class RouteToHTMLGen(BaseModel):
+    """路由到HTML生成Agent的参数"""
+    reason: str = Field(description="为什么需要生成HTML页面")
+    html_goal: str = Field(description="HTML页面的设计目标或内容要求")
+
 class FinishTask(BaseModel):
     """结束任务的参数"""
     reason: str = Field(description="为什么结束任务")
@@ -25,6 +31,7 @@ class FinishTask(BaseModel):
 
 
 # 定义路由工具
+
 @tool(args_schema=RouteToDataExplorer)
 def route_to_data_explorer(reason: str, expected_output: str) -> str:
     """
@@ -71,6 +78,19 @@ def route_to_file_analyzer(reason: str, file_type: str, analysis_goal: str) -> s
     """
     return f"ROUTE:Agent_File_Analysis|{reason}|{file_type}|{analysis_goal}"
 
+@tool(args_schema=RouteToHTMLGen)
+def route_to_html_gen(reason: str, html_goal: str) -> str:
+    """
+    当用户需要生成HTML页面或数据可视化前端代码时调用此工具。
+    
+    适用场景:
+    - 生成数据可视化大屏的HTML代码
+    - 根据分析结果生成前端页面
+    - 制作交互式可视化组件
+    - 输出美观、专业的HTML结构
+    """
+    return f"ROUTE:Agent_HTML_Gen|{reason}|{html_goal}"
+
 @tool(args_schema=FinishTask)
 def finish_task(reason: str, summary: str) -> str:
     """
@@ -88,5 +108,6 @@ routing_tools = [
     route_to_data_explorer,
     route_to_reporter,
     route_to_file_analyzer,
+    route_to_html_gen,
     finish_task
 ]

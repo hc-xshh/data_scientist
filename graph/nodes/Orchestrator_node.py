@@ -109,7 +109,8 @@ def build_context_message(state: AgentState) -> str:
 1. 如果需要查询/分析数据 → 调用 route_to_data_explorer
 2. 如果需要分析文件 → 调用 route_to_file_analyzer
 3. 如果需要生成报告/大屏/可视化 → 调用 route_to_reporter
-4. 如果所有任务已完成 → 调用 finish_task
+4. 如果需要生成HTML页面/前端代码 → 调用 route_to_html_gen
+5. 如果所有任务已完成 → 调用 finish_task
 
 注意：
 - 仔细分析用户意图，避免误判路由
@@ -189,15 +190,22 @@ def parse_routing_decision(response: AIMessage, state: AgentState) -> tuple:
         next_route = parts[0].replace("ROUTE:", "")
         routing_reason = parts[1] if len(parts) > 1 else ""
         
+        # 获取用户查询用于智能规划
+        messages = state.get("messages", [])
+        user_query = str([m.content for m in messages if isinstance(m, HumanMessage)])
+        
         # 智能任务规划：如果是数据探索且用户提到生成报告/大屏
         if next_route == "Agent_Data_Explorer":
-            messages = state.get("messages", [])
-            user_query = str([m.content for m in messages if isinstance(m, HumanMessage)])
-            
             if any(keyword in user_query for keyword in ["大屏", "报告", "可视化", "dashboard"]):
                 if "生成可视化报告" not in new_pending_tasks:
                     new_pending_tasks.append("生成可视化报告")
                     logger.info("检测到需要后续生成报告，已添加到pending_tasks")
+        
+        # 智能任务规划：如果用户提到生成HTML页面
+        if any(keyword in user_query for keyword in ["HTML", "页面", "前端", "web", "dashboard"]):
+            if "生成HTML页面" not in new_pending_tasks:
+                new_pending_tasks.append("生成HTML页面")
+                logger.info("检测到需要后续生成HTML，已添加到pending_tasks")
     
     return next_route, routing_reason, new_pending_tasks
 
