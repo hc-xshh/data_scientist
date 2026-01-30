@@ -3,10 +3,58 @@ from langchain_core.messages import HumanMessage, AIMessage, ToolMessage
 from langchain_deepseek import ChatDeepSeek
 from tools.Tool_Router import routing_tools  # 导入路由工具
 
+def message_process(messages :list):
+    # 创建一个内部使用的消息副本，不影响前端显示
+    internal_messages = []
+    for msg in messages:
+        if hasattr(msg, 'content') and isinstance(msg.content, list):
+            # 重构内容，将文件和图片转换为文本描述
+            text_parts = []
+            for item in msg.content:
+                if isinstance(item, dict):
+                    if item.get("type") == "file":
+                        # 将文件信息转换为文本描述
+                        filename = item.get("metadata", {}).get("filename", "unknown")
+                        size = item.get("metadata", {}).get("size", "unknown")
+                        mime_type = item.get("mime_type", "unknown")
+                        url = item.get("url", "")
+                        
+                        file_description = f"[文件: {filename}, 类型: {mime_type}, 大小: {size} bytes, URL: {url}]"
+                        text_parts.append({"type": "text", "text": file_description})
+                        
+                    elif item.get("type") == "image":
+                        # 将图片信息转换为文本描述
+                        url = item.get("url", "")
+                        image_description = f"[图片: 已上传图片, URL: {url}]"
+                        text_parts.append({"type": "text", "text": image_description})
+                    else:
+                        # 保持其他类型的内容不变
+                        text_parts.append(item)
+                else:
+                    # 如果不是字典，保持原样
+                    text_parts.append(item)
+            
+            # 创建内部消息用于LLM处理
+            internal_msg = HumanMessage(
+                content=text_parts,
+                additional_kwargs=getattr(msg, 'additional_kwargs', {}),
+                response_metadata=getattr(msg, 'response_metadata', {}),
+                id=getattr(msg, 'id', None)
+            )
+            internal_messages.append(internal_msg)
+        else:
+            # 如果消息内容不是列表，直接添加
+            internal_messages.append(msg)
+
+    return internal_messages
+    
+
 def Orchestrator_node(state: AgentState) -> AgentState:
     """使用工具调用进行动态路由的Orchestrator"""
     
     messages = state.get("messages", [])
+
+    messages = message_process(messages)
     
     # 1. 检查上一个Agent是否完成
     last_msg = messages[-1] if messages else None

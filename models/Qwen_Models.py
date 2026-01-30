@@ -7,7 +7,7 @@ from langchain_community.chat_models.tongyi import ChatTongyi
 load_dotenv()
 
 # 从环境变量中获取 DeepSeek API Key（如果未找到则抛出异常）
-QWQ_API_KEY = os.getenv("QWEN_API_KEY")
+QWQ_API_KEY = os.getenv("DASHSCOPE_API_KEY")
 if not QWQ_API_KEY:
     raise EnvironmentError("未在 .env 文件中找到 QWQ_API_KEY 配置，请检查 .env 文件是否存在且配置正确")
 
