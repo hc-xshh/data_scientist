@@ -4,7 +4,7 @@ from typing import Dict, List, Optional, Union
 from langchain_core.tools import tool
 import plotly.graph_objects as go
 import plotly.express as px
-import plotly  # 添加此行以修复 plotly 未定义错误
+import plotly
 from jinja2 import Template, Environment, FileSystemLoader
 import json
 
@@ -516,68 +516,3 @@ def generate_dashboard_html(
         error_msg = f"❌ 生成HTML失败: {str(e)}"
         print(error_msg)
         return error_msg
-
-# 测试代码示例
-if __name__ == "__main__":
-    # 示例1: 生成多图表仪表盘
-    test_charts = [
-        {
-            "type": "line",
-            "data": {
-                "x": ["1月", "2月", "3月", "4月", "5月"],
-                "销售额": [1200, 1900, 1500, 2100, 2400],
-                "利润": [300, 450, 400, 600, 750]
-            },
-            "config": {
-                "title": "月度销售趋势",
-                "x_label": "月份",
-                "y_label": "金额（万元）"
-            }
-        },
-        {
-            "type": "bar",
-            "data": {
-                "x": ["产品A", "产品B", "产品C", "产品D"],
-                "本月": [320, 450, 280, 390],
-                "上月": [280, 420, 310, 360]
-            },
-            "config": {
-                "title": "产品销售对比",
-                "x_label": "产品",
-                "y_label": "销量"
-            }
-        },
-        {
-            "type": "pie",
-            "data": {
-                "labels": ["华东", "华北", "华南", "西南", "其他"],
-                "values": [35, 28, 20, 12, 5]
-            },
-            "config": {
-                "title": "区域市场份额"
-            }
-        }
-    ]
-    
-    result = generate_dashboard_html(
-        charts_config=test_charts,
-        title="2026年Q1销售数据分析",
-        description="包含销售趋势、产品对比和区域分布的综合分析报告",
-        template_type="modern"
-    )
-    print(result)
-    
-    # 示例2: 快速生成单图表
-    simple_data = {
-        "x": [1, 2, 3, 4, 5],
-        "温度": [22, 24, 23, 25, 26]
-    }
-    
-    result2 = generate_simple_chart_html(
-        chart_type="line",
-        data=simple_data,
-        title="每日温度变化",
-        x_label="日期",
-        y_label="温度（℃）"
-    )
-    print(result2)
