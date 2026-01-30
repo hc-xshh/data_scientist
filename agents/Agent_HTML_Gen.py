@@ -1,11 +1,10 @@
 from langchain.agents import create_agent
 from langchain_deepseek import ChatDeepSeek
-from tools import generate_dashboard_html, generate_simple_chart_html
+from tools import generate_dashboard_html
 from prompts import HTMLGenPrompt
 
 tools = [
-    generate_dashboard_html,
-    generate_simple_chart_html
+    generate_dashboard_html
 ]
 
 model = ChatDeepSeek(model="deepseek-chat")

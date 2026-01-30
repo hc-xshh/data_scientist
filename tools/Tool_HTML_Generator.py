@@ -517,52 +517,6 @@ def generate_dashboard_html(
         print(error_msg)
         return error_msg
 
-
-# 移除 @tool 装饰器
-def generate_simple_chart_html(
-    chart_type: str,
-    data: Dict,
-    title: str = "数据图表",
-    x_label: str = "X轴",
-    y_label: str = "Y轴",
-    output_filename: Optional[str] = None
-) -> str:
-    """
-    快速生成单个图表的HTML页面（简化版）
-    
-    参数:
-        chart_type: 图表类型 (line/bar/pie/scatter)
-        data: 数据字典
-            - 折线图/柱状图: {"x": [1,2,3], "系列1": [10,20,30], "系列2": [15,25,35]}
-            - 饼图: {"labels": ["A","B","C"], "values": [30,50,20]}
-            - 散点图: {"x": [1,2,3], "y": [4,5,6]}
-        title: 图表标题
-        x_label: X轴标签
-        y_label: Y轴标签
-        output_filename: 输出文件名
-    
-    返回:
-        生成的HTML文件路径
-    """
-    chart_config = [{
-        "type": chart_type,
-        "data": data,
-        "config": {
-            "title": title,
-            "x_label": x_label,
-            "y_label": y_label
-        }
-    }]
-    
-    # 直接调用 generate_dashboard_html 的逻辑（非工具调用）
-    return generate_dashboard_html(
-        charts_config=chart_config,
-        title=title,
-        description=f"{chart_type.capitalize()}图表可视化",
-        template_type="minimal",
-        output_filename=output_filename
-    )
-
 # 测试代码示例
 if __name__ == "__main__":
     # 示例1: 生成多图表仪表盘
