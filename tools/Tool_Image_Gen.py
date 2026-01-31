@@ -6,6 +6,9 @@ from datetime import datetime
 import urllib3
 import json
 import time
+import tempfile
+
+FILE_FOLDER = tempfile.gettempdir()
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -226,7 +229,7 @@ def image_gen_tool(prompt_text: str, model: str = "wan2.6-t2i", size: str = "128
 
             if save_local:
                 # 修改保存路径为指定的outputs目录
-                save_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "outputs", "dashboard")
+                save_dir = FILE_FOLDER
                 os.makedirs(save_dir, exist_ok=True)
                 
                 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -244,9 +247,11 @@ def image_gen_tool(prompt_text: str, model: str = "wan2.6-t2i", size: str = "128
                     abs_path = os.path.abspath(filename)
                     file_size = len(img_response.content) / 1024
                     
+                    file_url = f"http://localhost:5000/files/{os.path.basename(filename)}"
+
                     print(f"✅ 文件已保存: {abs_path}, 大小: {file_size:.2f} KB")  # ✅ 添加此行
                     
-                    return f"✅ 图像生成成功!\n📁 保存路径: {abs_path}\n📦 文件大小: {file_size:.2f} KB\n🌐 在线URL: {image_url}"
+                    return f"✅ 图像生成成功!\n📁 保存路径: {abs_path}\n📦 文件大小: {file_size:.2f} KB\n🌐 在线URL: {image_url}, 本地URL: {file_url}"
                 else:
                     print(f"❌ 图像下载失败: HTTP {img_response.status_code}")  # ✅ 添加此行
                     return f"⚠️ 图像生成成功但下载失败 (HTTP {img_response.status_code})\n🌐 在线URL: {image_url}"

@@ -7,6 +7,9 @@ import plotly.express as px
 import plotly
 from jinja2 import Template, Environment, FileSystemLoader
 import json
+import tempfile
+
+FILE_FOLDER = tempfile.gettempdir()
 
 def create_plotly_chart(chart_type: str, data: Dict, config: Dict) -> go.Figure:
     """
@@ -432,7 +435,7 @@ def generate_dashboard_html(
         description: 仪表盘描述
         template_type: 模板类型 (modern/classic/minimal)
         output_filename: 输出文件名（不指定则自动生成）
-        save_dir: 保存目录（不指定则使用默认outputs/dashboard）
+        save_dir: 保存目录（不指定则使用默认temp目录）
     
     返回:
         生成的HTML文件路径
@@ -440,11 +443,7 @@ def generate_dashboard_html(
     try:
         # 准备保存目录
         if save_dir is None:
-            save_dir = os.path.join(
-                os.path.dirname(os.path.dirname(__file__)), 
-                "outputs", 
-                "dashboard"
-            )
+            save_dir = FILE_FOLDER
         
         os.makedirs(save_dir, exist_ok=True)
         
@@ -509,8 +508,9 @@ def generate_dashboard_html(
         print(f"✅ HTML仪表盘已生成: {output_path}")
         print(f"📊 包含 {len(charts_data)} 个图表")
         print(f"🎨 模板类型: {template_type}")
-        
-        return f"成功生成HTML仪表盘: {output_path}"
+
+        file_url = f"http://localhost:5000/files/{os.path.basename(output_path)}"
+        return f"成功生成HTML仪表盘: {output_path}, 访问URL: {file_url}"
     
     except Exception as e:
         error_msg = f"❌ 生成HTML失败: {str(e)}"
