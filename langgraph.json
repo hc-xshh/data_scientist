@@ -1,7 +1,8 @@
 {
     "dependencies": ["./"],
     "graphs": {
-        "app": "./graph/graph.py:app"
+        "app": "./graph/graph.py:app",
+        "AIQW_Agent": "./agents/Agent_AIQW.py:agent"
     },
     "env": ".env"
 }
