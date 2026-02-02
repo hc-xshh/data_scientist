@@ -4,7 +4,12 @@
         "app": "./graph/graph.py:app",
         "Agent_AIQW_Growth": "./agents/Agent_AIQW_Growth.py:agent",
         "Agent_Documents_Gen_Counsellor": "./agents/Agent_Documents_Gen_Counsellor.py:agent",
-        "Agent_Offering_List": "./agents/Agent_Offering_List.py:agent"
+        "Agent_Offering_List": "./agents/Agent_Offering_List.py:agent",
+        "Agent_AI_Assisted_Gen": "./agents/Agent_AI_Assisted_Gen.py:agent",
+        "Agent_AI_Contract_Review": "./agents/Agent_AI_Contract_Review.py:agent",
+        "Agent_AI_Doc_Gen_Business":"./agents/Agent_AI_Doc_Gen_Business.py:agent",
+        "Agent_AI_Interpret_Extract":"./agents/Agent_AI_Interpret_Extract.py:agent",
+        "Agent_AI_QA": "./agents/Agent_AI_QA.py:agent"
     },
     "env": ".env"
 }
