@@ -2,7 +2,9 @@
     "dependencies": ["./"],
     "graphs": {
         "app": "./graph/graph.py:app",
-        "AIQW_Agent": "./agents/Agent_AIQW.py:agent"
+        "Agent_AIQW_Growth": "./agents/Agent_AIQW_Growth.py:agent",
+        "Agent_Documents_Gen_Counsellor": "./agents/Agent_Documents_Gen_Counsellor.py:agent",
+        "Agent_Offering_List": "./agents/Agent_Offering_List.py:agent"
     },
     "env": ".env"
 }
