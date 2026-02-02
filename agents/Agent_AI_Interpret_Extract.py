@@ -4,10 +4,10 @@
 from langchain.agents import create_agent
 from config import settings
 from models.Deepseek_Models import call_deepseek_chat
-from prompts import AIInterpretExtractPromt
+from prompts import AIInterpretExtractPrompt
 
 agent = create_agent(
     model=call_deepseek_chat(),
-    system_prompt=AIInterpretExtractPromt
+    system_prompt=AIInterpretExtractPrompt
 )
 
