@@ -31,12 +31,12 @@ class Settings(BaseSettings):
 
 
     # 数据库配置
-    db_host: str
-    db_user: str
-    db_password: str
+    mysql_host: str
+    mysql_port: int = 3306
+    mysql_user: str
+    mysql_pwd: str
     db_name: str
-    db_port: int = 3306
-
+    
     # LangSmith 配置（可选）
     langchain_tracing_v2: bool = False
     langchain_api_key: Optional[str] = None
