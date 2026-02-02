@@ -13,7 +13,7 @@ from fastapi.middleware.cors import CORSMiddleware
 load_dotenv()
 
 # --- 配置 ---
-UPLOAD_FOLDER = os.path.join(tempfile.gettempdir(),"test")
+UPLOAD_FOLDER = tempfile.gettempdir()
 MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB
 
 app = Flask(__name__)
