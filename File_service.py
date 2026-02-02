@@ -8,11 +8,12 @@ import mimetypes
 import pymysql
 from dotenv import load_dotenv
 from werkzeug.security import generate_password_hash
+from fastapi.middleware.cors import CORSMiddleware
 
 load_dotenv()
 
 # --- 配置 ---
-UPLOAD_FOLDER = tempfile.gettempdir()
+UPLOAD_FOLDER = os.path.join(tempfile.gettempdir(),"test")
 MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB
 
 app = Flask(__name__)
@@ -23,14 +24,15 @@ app.config['MAX_CONTENT_LENGTH'] = MAX_CONTENT_LENGTH
 # 注意：在生产环境中，你应该明确指定允许的域名，而不是使用 '*'
 CORS(app, resources={r"/upload": {"origins": "*"}, 
 r"/files/*": {"origins": "*"},
-r"/api/user_assistants": {"origins": "*"},
-r"/api/admin/users": {"origins": "*"},
-r"/api/admin/users/*": {"origins": "*"},
-r"/api/admin/assistants": {"origins": "*"},
-r"/api/admin/assistants/*": {"origins": "*"}
+r"/api/*": {"origins": "*"},
+# r"/api/user_assistants": {"origins": "*"},
+# r"/api/admin/users": {"origins": "*"},
+# r"/api/admin/users/*": {"origins": "*"},
+# r"/api/admin/assistants": {"origins": "*"},
+# r"/api/admin/assistants/*": {"origins": "*"},
+# r"/api/admin/roles": {"origins": "*"},
+# r"/api/admin/roles/*": {"origins": "*"},
 })
-
-
 
 # 如果你想允许所有路由跨域，可以直接这样写：
 # CORS(app)
@@ -98,10 +100,9 @@ def get_db_connection():
         charset='utf8mb4',
         cursorclass=pymysql.cursors.DictCursor # 返回字典格式的结果
     )
-    print(os.getenv('db_name'))
-    print("数据库连接已建立,连接信息:", connection)
-
     return connection
+
+
 
 @app.route('/api/user_assistants', methods=['GET'])
 def get_user_assistants():
@@ -125,10 +126,11 @@ def get_user_assistants():
                 ai.description AS assistant_description,
                 ai.icon_url
             FROM Login_users lu
-            INNER JOIN user_assistants ua ON lu.id = ua.user_id
-            INNER JOIN assistant_info ai ON ua.assistant_info_id = ai.id
-            WHERE lu.username = %s AND ua.is_active = TRUE
-            ORDER BY ai.name; -- 可选：按名称排序
+            INNER JOIN user_roles ur on lu.id=ur.user_id
+            INNER JOIN role_apps ra on ur.role_id=ra.role_id
+            INNER JOIN assistant_info ai ON ra.app_id = ai.id
+            WHERE lu.username = %s AND ai.in_use="ACTIVE"
+            ORDER BY ai.id;
             """
             cursor.execute(sql, (user_id,))
             results = cursor.fetchall()
@@ -162,38 +164,63 @@ def get_user_assistants():
 @app.route('/api/admin/users', methods=['GET'])
 def get_users():
     """
-    查询用户列表 (支持分页)
+    查询用户列表 (支持分页), 包含用户角色信息
     """
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 10, type=int)
-    print(request)
+    
     connection = None
     try:
         connection = get_db_connection()
         with connection.cursor() as cursor:
-            # 计算总数 (用于分页)
+            # 计算总数
             count_sql = "SELECT COUNT(*) as total FROM Login_users"
             cursor.execute(count_sql)
             total_count = cursor.fetchone()['total']
 
-            # 计算偏移量
             offset = (page - 1) * per_page
 
-            # 查询用户列表
+            # 查询用户列表及角色（使用 GROUP_CONCAT 聚合角色信息，避免 N+1 查询）
             sql = """
-            SELECT id, username, real_name, email, created_at
-            FROM Login_users
-            ORDER BY created_at DESC
+            SELECT 
+                u.id, u.username, u.real_name, u.email, u.created_at,
+                GROUP_CONCAT(DISTINCT CONCAT(r.id, ':', r.name) SEPARATOR '|') as roles_str
+            FROM Login_users u
+            LEFT JOIN user_roles ur ON u.id = ur.user_id
+            LEFT JOIN roles r ON ur.role_id = r.id
+            GROUP BY u.id
+            ORDER BY u.created_at DESC
             LIMIT %s OFFSET %s
             """
-            print("="*50)
-            print(sql, (per_page, offset))
-            print("="*50)
-
             cursor.execute(sql, (per_page, offset))
-            users = cursor.fetchall()
+            rows = cursor.fetchall()
 
-            # 计算总页数
+            # 处理角色数据（将聚合字符串解析为数组）
+            users = []
+            for row in rows:
+                user_data = {
+                    'id': row['id'],
+                    'username': row['username'],
+                    'real_name': row['real_name'],
+                    'email': row['email'],
+                    'created_at': row['created_at'].strftime('%Y-%m-%d %H:%M:%S') if row['created_at'] else None,
+                    'roles': []
+                }
+                
+                # 解析角色字符串 "1:管理员|2:普通用户" → [{'id': 1, 'name': '管理员'}, ...]
+                if row['roles_str']:
+                    roles_list = []
+                    for role_str in row['roles_str'].split('|'):
+                        if ':' in role_str:
+                            role_id, role_name = role_str.split(':', 1)
+                            roles_list.append({
+                                'id': int(role_id),
+                                'name': role_name
+                            })
+                    user_data['roles'] = roles_list
+                
+                users.append(user_data)
+
             total_pages = (total_count + per_page - 1) // per_page
 
             return jsonify({
@@ -216,67 +243,387 @@ def get_users():
         if connection:
             connection.close()
 
-@app.route('/api/admin/users', methods=['POST'])
-def create_user():
-    """
-    新增用户
-    """
-    data = request.get_json()
-
-    if not data or not data.get('username') or not data.get('real_name') or not data.get('email'):
-        return jsonify({'success': False, 'message': '用户名、真实姓名和邮箱不能为空'}), 400
-
-    username = data['username']
-    real_name = data['real_name']
-    email = data['email']
-    # 自动生成一个默认密码或要求提供
-    # 注意：实际应用中不应存储明文密码！这里仅作演示，需要加密。
-    # 你应该在前端要求输入密码，或后端生成随机密码并发送邮件。
-    # 这里我们先生成一个默认密码的哈希
-    default_password = "DefaultPassword123!" # 实际应用中不应使用固定密码
-    password_hash = generate_password_hash(default_password)
-
+@app.route('/api/admin/roles', methods=['GET'])
+def get_roles():
+    """获取角色列表（分页）"""
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 10, type=int)
+    
     connection = None
     try:
         connection = get_db_connection()
         with connection.cursor() as cursor:
-            # 检查用户名或邮箱是否已存在
-            check_sql = "SELECT id FROM Login_users WHERE username = %s OR email = %s"
-            cursor.execute(check_sql, (username, email))
-            existing_user = cursor.fetchone()
-            if existing_user:
-                return jsonify({'success': False, 'message': '用户名或邮箱已存在'}), 400
-
-            # 插入新用户
-            insert_sql = """
-            INSERT INTO Login_users (username, real_name, email, password_hash)
-            VALUES (%s, %s, %s, %s)
+            # 计算总数
+            cursor.execute("SELECT COUNT(*) as total FROM roles")
+            total_count = cursor.fetchone()['total']
+            
+            offset = (page - 1) * per_page
+            
+            # 查询角色列表
+            sql = """
+                SELECT id, name, created_at 
+                FROM roles 
+                ORDER BY id ASC
+                LIMIT %s OFFSET %s
             """
-            cursor.execute(insert_sql, (username, real_name, email, password_hash))
-            connection.commit()
-
-            # 获取插入的用户ID
-            user_id = cursor.lastrowid
-
+            cursor.execute(sql, (per_page, offset))
+            roles = cursor.fetchall()
+            
+            # 格式化日期
+            for role in roles:
+                if role['created_at']:
+                    role['created_at'] = role['created_at'].strftime('%Y-%m-%d %H:%M:%S')
+            
+            total_pages = (total_count + per_page - 1) // per_page
+            
             return jsonify({
-                'success': True,
-                'message': '用户创建成功',
-                'data': {
-                    'id': user_id,
-                    'username': username,
-                    'real_name': real_name,
-                    'email': email,
-                    'created_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S') # 假设创建时间是现在
+                "success": True,
+                "data": {
+                    "roles": roles,
+                    "pagination": {
+                        "current_page": page,
+                        "per_page": per_page,
+                        "total": total_count,
+                        "pages": total_pages
+                    }
                 }
-            }), 201
-
-    except pymysql.MySQLError as e:
+            })
+    except Exception as e:
         print(f"Database error: {e}")
-        connection.rollback()
-        return jsonify({'success': False, 'message': '数据库错误'}), 500
+        return jsonify({"success": False, "message": "数据库错误"}), 500
     finally:
         if connection:
             connection.close()
+
+@app.route('/api/admin/roles', methods=['POST'])
+def create_role():
+    """创建角色"""
+    data = request.get_json()
+    if not data or not data.get('name'):
+        return jsonify({"success": False, "message": "角色名称不能为空"}), 400
+    
+    name = data['name'].strip()
+    connection = None
+    
+    try:
+        connection = get_db_connection()
+        with connection.cursor() as cursor:
+            # 检查角色名是否已存在
+            cursor.execute("SELECT id FROM roles WHERE name = %s", (name,))
+            if cursor.fetchone():
+                return jsonify({"success": False, "message": "角色名称已存在"}), 400
+            
+            # 插入新角色
+            cursor.execute("INSERT INTO roles (name) VALUES (%s)", (name,))
+            connection.commit()
+            
+            role_id = cursor.lastrowid
+            return jsonify({
+                "success": True,
+                "message": "角色创建成功",
+                "data": {
+                    "id": role_id,
+                    "name": name,
+                    "created_at": datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                }
+            }), 201
+    except Exception as e:
+        print(f"Database error: {e}")
+        if connection:
+            connection.rollback()
+        return jsonify({"success": False, "message": "数据库错误"}), 500
+    finally:
+        if connection:
+            connection.close()
+
+@app.route('/api/admin/roles/<int:role_id>', methods=['PUT'])
+def update_role(role_id):
+    """更新角色"""
+    data = request.get_json()
+    if not data or not data.get('name'):
+        return jsonify({"success": False, "message": "角色名称不能为空"}), 400
+    
+    name = data['name'].strip()
+    connection = None
+    
+    try:
+        connection = get_db_connection()
+        with connection.cursor() as cursor:
+            # 检查角色是否存在
+            cursor.execute("SELECT id FROM roles WHERE id = %s", (role_id,))
+            if not cursor.fetchone():
+                return jsonify({"success": False, "message": "角色不存在"}), 404
+            
+            # 检查新名称是否与其他角色冲突
+            cursor.execute("SELECT id FROM roles WHERE name = %s AND id != %s", (name, role_id))
+            if cursor.fetchone():
+                return jsonify({"success": False, "message": "角色名称已存在"}), 400
+            
+            # 更新角色
+            cursor.execute("UPDATE roles SET name = %s WHERE id = %s", (name, role_id))
+            connection.commit()
+            
+            return jsonify({
+                "success": True,
+                "message": "角色信息更新成功"
+            })
+    except Exception as e:
+        print(f"Database error: {e}")
+        if connection:
+            connection.rollback()
+        return jsonify({"success": False, "message": "数据库错误"}), 500
+    finally:
+        if connection:
+            connection.close()
+
+@app.route('/api/admin/roles/<int:role_id>', methods=['DELETE'])
+def delete_role(role_id):
+    """删除角色"""
+    connection = None
+    try:
+        connection = get_db_connection()
+        with connection.cursor() as cursor:
+            # 检查角色是否存在
+            cursor.execute("SELECT id FROM roles WHERE id = %s", (role_id,))
+            if not cursor.fetchone():
+                return jsonify({"success": False, "message": "角色不存在"}), 404
+            
+            # 删除角色（关联表会自动级联删除）
+            cursor.execute("DELETE FROM roles WHERE id = %s", (role_id,))
+            connection.commit()
+            
+            return jsonify({
+                "success": True,
+                "message": "角色删除成功"
+            })
+    except Exception as e:
+        print(f"Database error: {e}")
+        if connection:
+            connection.rollback()
+        return jsonify({"success": False, "message": "数据库错误"}), 500
+    finally:
+        if connection:
+            connection.close()
+
+
+# ==================== 权限管理 API ====================
+
+@app.route('/api/admin/roles/<int:role_id>/permissions', methods=['GET'])
+def get_role_permissions(role_id):
+    """获取角色的应用权限（已授权的APP ID列表）"""
+    connection = None
+    try:
+        connection = get_db_connection()
+        with connection.cursor() as cursor:
+            # 验证角色存在
+            cursor.execute("SELECT id FROM roles WHERE id = %s", (role_id,))
+            if not cursor.fetchone():
+                return jsonify({"success": False, "message": "角色不存在"}), 404
+            
+            # 获取已授权的应用ID列表
+            cursor.execute(
+                "SELECT app_id FROM role_apps WHERE role_id = %s", 
+                (role_id,)
+            )
+            results = cursor.fetchall()
+            authorized_apps = [r['app_id'] for r in results]
+            
+            return jsonify({
+                "success": True,
+                "data": {
+                    "role_id": role_id,
+                    "authorized_app_ids": authorized_apps
+                }
+            })
+    except Exception as e:
+        print(f"Database error: {e}")
+        return jsonify({"success": False, "message": "数据库错误"}), 500
+    finally:
+        if connection:
+            connection.close()
+
+
+@app.route('/api/admin/role_apps', methods=['POST'])
+def add_role_permission():
+    """为角色添加应用授权"""
+    data = request.get_json()
+    if not data or not data.get('role_id') or not data.get('app_id'):
+        return jsonify({"success": False, "message": "角色ID和应用ID不能为空"}), 400
+    
+    role_id = data['role_id']
+    app_id = data['app_id']
+    connection = None
+    
+    try:
+        connection = get_db_connection()
+        with connection.cursor() as cursor:
+            # 检查是否已存在
+            cursor.execute(
+                "SELECT id FROM role_apps WHERE role_id = %s AND app_id = %s",
+                (role_id, app_id)
+            )
+            if cursor.fetchone():
+                return jsonify({
+                    "success": True,
+                    "message": "该授权已存在"
+                })
+            
+            # 添加授权
+            cursor.execute(
+                "INSERT INTO role_apps (role_id, app_id) VALUES (%s, %s)",
+                (role_id, app_id)
+            )
+            connection.commit()
+            
+            return jsonify({
+                "success": True,
+                "message": "授权成功"
+            })
+    except Exception as e:
+        print(f"Database error: {e}")
+        if connection:
+            connection.rollback()
+        return jsonify({"success": False, "message": "数据库错误"}), 500
+    finally:
+        if connection:
+            connection.close()
+
+@app.route('/api/admin/role_apps', methods=['DELETE'])
+def remove_role_permission():
+    """取消角色的应用授权"""
+    data = request.get_json()
+    if not data or not data.get('role_id') or not data.get('app_id'):
+        return jsonify({"success": False, "message": "角色ID和应用ID不能为空"}), 400
+    
+    role_id = data['role_id']
+    app_id = data['app_id']
+    connection = None
+    
+    try:
+        connection = get_db_connection()
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "DELETE FROM role_apps WHERE role_id = %s AND app_id = %s",
+                (role_id, app_id)
+            )
+            connection.commit()
+            
+            return jsonify({
+                "success": True,
+                "message": "取消授权成功"
+            })
+    except Exception as e:
+        print(f"Database error: {e}")
+        if connection:
+            connection.rollback()
+        return jsonify({"success": False, "message": "数据库错误"}), 500
+    finally:
+        if connection:
+            connection.close()
+
+
+
+# 获取用户角色
+@app.route('/api/admin/users/<int:user_id>/roles', methods=['GET'])
+def get_user_roles(user_id):
+    connection = get_db_connection()
+    try:
+        with connection.cursor() as cursor:
+            sql = """
+                SELECT r.id, r.name 
+                FROM roles r
+                INNER JOIN user_roles ur ON r.id = ur.role_id
+                WHERE ur.user_id = %s
+            """
+            cursor.execute(sql, (user_id,))
+            roles = cursor.fetchall()
+            return jsonify({'success': True, 'data': {'roles': roles}})
+    finally:
+        connection.close()
+
+# 更新用户角色（批量）
+@app.route('/api/admin/users/<int:user_id>/roles', methods=['PUT'])
+def update_user_roles(user_id):
+    data = request.get_json()
+    role_ids = data.get('role_ids', [])
+    
+    connection = get_db_connection()
+    try:
+        with connection.cursor() as cursor:
+            # 验证用户存在
+            cursor.execute("SELECT id FROM Login_users WHERE id = %s", (user_id,))
+            if not cursor.fetchone():
+                return jsonify({'success': False, 'message': '用户不存在'}), 404
+            
+            # 删除旧的角色关联
+            cursor.execute("DELETE FROM user_roles WHERE user_id = %s", (user_id,))
+            
+            # 插入新的角色关联
+            for role_id in role_ids:
+                cursor.execute(
+                    "INSERT INTO user_roles (user_id, role_id) VALUES (%s, %s)",
+                    (user_id, role_id)
+                )
+            
+            connection.commit()
+            return jsonify({'success': True, 'message': '角色更新成功'})
+    except Exception as e:
+        connection.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 500
+    finally:
+        connection.close()
+
+# 修改创建用户接口，支持角色分配
+@app.route('/api/admin/users', methods=['POST'])
+def create_user():
+    data = request.get_json()
+    username = data.get('username')
+    real_name = data.get('real_name')
+    email = data.get('email')
+    password = data.get('password', 'DefaultPassword123!')
+    role_ids = data.get('role_ids', [])
+    
+    if not all([username, real_name, email]):
+        return jsonify({'success': False, 'message': '必填字段不能为空'}), 400
+    
+    connection = get_db_connection()
+    try:
+        with connection.cursor() as cursor:
+            # 检查用户名/邮箱是否存在
+            cursor.execute(
+                "SELECT id FROM Login_users WHERE username = %s OR email = %s",
+                (username, email)
+            )
+            if cursor.fetchone():
+                return jsonify({'success': False, 'message': '用户名或邮箱已存在'}), 400
+            
+            # 创建用户
+            password_hash = generate_password_hash(password)
+            cursor.execute(
+                "INSERT INTO Login_users (username, real_name, email, password_hash) VALUES (%s, %s, %s, %s)",
+                (username, real_name, email, password_hash)
+            )
+            user_id = cursor.lastrowid
+            
+            # 分配角色
+            for role_id in role_ids:
+                cursor.execute(
+                    "INSERT INTO user_roles (user_id, role_id) VALUES (%s, %s)",
+                    (user_id, role_id)
+                )
+            
+            connection.commit()
+            return jsonify({
+                'success': True,
+                'message': '创建成功',
+                'data': {'id': user_id, 'username': username}
+            }), 201
+    except Exception as e:
+        connection.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 500
+    finally:
+        connection.close()
+
 
 @app.route('/api/admin/users/<int:user_id>', methods=['PUT'])
 def update_user(user_id):
@@ -341,6 +688,7 @@ def update_user(user_id):
         if connection:
             connection.close()
 
+# 删除用户
 @app.route('/api/admin/users/<int:user_id>', methods=['DELETE'])
 def delete_user(user_id):
     """
@@ -376,6 +724,7 @@ def delete_user(user_id):
             connection.close()
 # app.py 或 api.py (在之前的代码基础上添加)
 
+# 获取助手列表
 @app.route('/api/admin/assistants', methods=['GET'])
 def get_assistants():
     """
@@ -427,6 +776,7 @@ def get_assistants():
         if connection:
             connection.close()
 
+# 创建助手
 @app.route('/api/admin/assistants', methods=['POST'])
 def create_assistant():
     """
@@ -486,6 +836,7 @@ def create_assistant():
         if connection:
             connection.close()
 
+# 修改助手信息
 @app.route('/api/admin/assistants/<int:assistant_id>', methods=['PUT'])
 def update_assistant(assistant_id):
     """
@@ -543,6 +894,9 @@ def update_assistant(assistant_id):
         if connection:
             connection.close()
 
+
+
+#删除助手
 @app.route('/api/admin/assistants/<int:assistant_id>', methods=['DELETE'])
 def delete_assistant(assistant_id):
     """
