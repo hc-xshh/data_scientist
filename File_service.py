@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 import os
 from uuid import uuid4
 from flask import Flask, request, jsonify, send_from_directory, abort
@@ -7,32 +7,124 @@ import tempfile
 import mimetypes
 import pymysql
 from dotenv import load_dotenv
-from werkzeug.security import generate_password_hash
 from fastapi.middleware.cors import CORSMiddleware
+
+import jwt
+from functools import wraps
+from werkzeug.security import generate_password_hash, check_password_hash
 
 load_dotenv()
 
 # --- 配置 ---
 UPLOAD_FOLDER = tempfile.gettempdir()
 MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB
+JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY', 'your-secret-key-123456')
+JWT_EXPIRATION_HOURS = int(os.getenv('JWT_EXPIRATION_HOURS', 24))
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = MAX_CONTENT_LENGTH
 
 # 初始化CORS，允许所有来源
-# 注意：在生产环境中，你应该明确指定允许的域名，而不是使用 '*'
-CORS(app, resources={r"/upload": {"origins": "*"}, 
-r"/files/*": {"origins": "*"},
-r"/api/*": {"origins": "*"},
-# r"/api/user_assistants": {"origins": "*"},
-# r"/api/admin/users": {"origins": "*"},
-# r"/api/admin/users/*": {"origins": "*"},
-# r"/api/admin/assistants": {"origins": "*"},
-# r"/api/admin/assistants/*": {"origins": "*"},
-# r"/api/admin/roles": {"origins": "*"},
-# r"/api/admin/roles/*": {"origins": "*"},
+CORS(app, resources={
+    r"/upload": {"origins": "*"}, 
+    r"/files/*": {"origins": "*"},
+    r"/api/*": {"origins": "*"}
 })
+
+def token_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        token = None
+        if 'Authorization' in request.headers:
+            auth_header = request.headers['Authorization']
+            if auth_header.startswith('Bearer '):
+                token = auth_header.split(" ")[1]
+        
+        if not token:
+            return jsonify({'message': 'Token is missing!'}), 401
+        
+        try:
+            data = jwt.decode(token, JWT_SECRET_KEY, algorithms=["HS256"])
+            current_user_id = data['user_id']
+        except jwt.ExpiredSignatureError:
+            return jsonify({'message': 'Token has expired!'}), 401
+        except jwt.InvalidTokenError:
+            return jsonify({'message': 'Token is invalid!'}), 401
+            
+        return f(current_user_id, *args, **kwargs)
+    
+    return decorated
+
+@app.route('/api/login', methods=['POST'])
+def login():
+    data = request.get_json()
+    if not data or not data.get('username') or not data.get('password'):
+        return jsonify({'message': 'Invalid request'}), 400
+    
+    connection = None
+    try:
+        connection = get_db_connection()
+        with connection.cursor() as cursor:
+            sql = "SELECT id, username, password_hash, real_name FROM Login_users WHERE username = %s"
+            cursor.execute(sql, (data['username'],))
+            user = cursor.fetchone()
+            
+            if user and check_password_hash(user['password_hash'], data['password']):
+                token = jwt.encode({
+                    'user_id': user['id'],
+                    'username': user['username'],
+                    'exp': datetime.utcnow() + timedelta(hours=JWT_EXPIRATION_HOURS)
+                }, JWT_SECRET_KEY, algorithm="HS256")
+                
+                return jsonify({
+                    'token': token,
+                    'user': {
+                        'id': user['id'],
+                        'username': user['username'],
+                        'real_name': user['real_name']
+                    }
+                }), 200
+            else:
+                return jsonify({'message': 'Invalid username or password'}), 401
+    except Exception as e:
+        print(f"Login error: {e}")
+        return jsonify({'message': 'Internal server error'}), 500
+    finally:
+        if connection:
+            connection.close()
+
+@app.route('/api/reset-password', methods=['POST'])
+def reset_password():
+    data = request.get_json()
+    if not data or not data.get('username') or not data.get('email') or not data.get('new_password'):
+        return jsonify({'message': 'Missing required fields'}), 400
+    
+    connection = None
+    try:
+        connection = get_db_connection()
+        with connection.cursor() as cursor:
+            # 校验用户名和邮箱是否匹配
+            sql = "SELECT id FROM Login_users WHERE username = %s AND email = %s"
+            cursor.execute(sql, (data['username'], data['email']))
+            user = cursor.fetchone()
+            
+            if not user:
+                return jsonify({'message': 'Username and email do not match'}), 404
+            
+            # 更新密码
+            new_password_hash = generate_password_hash(data['new_password'])
+            update_sql = "UPDATE Login_users SET password_hash = %s WHERE id = %s"
+            cursor.execute(update_sql, (new_password_hash, user['id']))
+            connection.commit()
+            
+            return jsonify({'message': 'Password reset successful'}), 200
+    except Exception as e:
+        print(f"Reset password error: {e}")
+        return jsonify({'message': 'Internal server error'}), 500
+    finally:
+        if connection:
+            connection.close()
 
 # 如果你想允许所有路由跨域，可以直接这样写：
 # CORS(app)
@@ -120,7 +212,7 @@ def get_user_assistants():
         with connection.cursor() as cursor:
             # SQL 查询语句：关联 login_users, user_assistants, assistant_info
             sql = """
-            SELECT 
+            SELECT DISTINCT ai.id,
                 ai.ASSISTANT_ID,
                 ai.name AS assistant_name,
                 ai.description AS assistant_description,
