@@ -8,6 +8,8 @@ from .Tool_Word_Parser import parse_word_document
 from .Tool_Image_Parser import parse_image_file
 from .Tool_PDF_Generator import generate_pdf_document, quick_pdf_generate, generate_document
 from .Tool_Word_Generator import generate_word_document, quick_word_generate
+from .Tool_Data_Parser import parse_data_file
+
 __all__ = [
     "image_gen_tool",
     "get_tables_from_db",
@@ -25,4 +27,5 @@ __all__ = [
     'generate_document',
     'generate_word_document',
     'quick_word_generate',
+    "parse_data_file"
 ]

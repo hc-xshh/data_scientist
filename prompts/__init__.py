@@ -11,6 +11,8 @@ from .Prompt_AI_Contract_Review import Prompt as AIContractReviewPrompt
 from .Prompt_AI_Doc_Gen_Business import Prompt as AIDocGenBusinessPrompt
 from .Prompt_AI_Interpret_Extract import Prompt as AIInterpretExtractPrompt
 from .Prompt_AIQA import Prompt as AIQAPrompt
+from .Prompt_Data_Parser import Prompt as DataParserPrompt
+
 __all__ = [
     "DataExplorerPrompts",
     "InsighterReporterPrompt",
@@ -24,5 +26,6 @@ __all__ = [
     "AIContractReviewPrompt",
     "AIDocGenBusinessPrompt",
     "AIInterpretExtractPrompt",
-    "AIQAPrompt"
+    "AIQAPrompt",
+    "DataParserPrompt",
 ]
