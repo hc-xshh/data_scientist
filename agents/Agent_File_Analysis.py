@@ -4,12 +4,14 @@
 from langchain.agents import create_agent
 from langchain_deepseek import ChatDeepSeek
 from prompts import FileAnalysisPrompt
-from tools import parse_pdf_document, parse_word_document, parse_image_file
+from tools import parse_pdf_document, parse_word_document, parse_image_file, parse_data_file
 
 tools = [
     parse_pdf_document,
     parse_word_document,
     parse_image_file,
+    parse_data_file
+
 ]
 
 model = ChatDeepSeek(model="deepseek-chat")

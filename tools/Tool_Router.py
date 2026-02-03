@@ -64,24 +64,33 @@ def route_to_reporter(reason: str, visualization_type: str) -> str:
 @tool(args_schema=RouteToFileAnalyzer)
 def route_to_file_analyzer(reason: str, file_type: str, analysis_goal: str) -> str:
     """
-    当用户需要解析和分析PDF文档、Word文档或图像文件时调用此工具。
+    当用户需要解析和分析PDF文档、Word文档、图像文件或数据文件时调用此工具。
     
     适用场景:
-    - 解析PDF文档,提取文本、图像和表格内容
-    - 解析Word文档(.docx),提取文本、图像和表格,保留结构层次
-    - 分析图像文件,识别图表、截图、照片中的内容
-    - 使用视觉大模型理解文档中的图像和图表
-    - 提取学术论文、报告、合同等文档的完整内容
-    - 识别图像中的文字、物体、场景
-    - 分析数据可视化图表和截图
+    - 解析PDF文档，提取文本、图像和表格内容，支持学术论文、商业报告等
+    - 解析Word文档(.docx)，提取文本、图像和表格，保留文档层次结构
+    - 分析图像文件，识别图表、截图、照片中的内容，使用视觉模型理解图像
+    - 解析Excel、CSV等数据文件，提取数据内容和统计信息
+    - 使用视觉大模型深度理解文档中的图像、图表和复杂布局
+    - 提取学术论文、合同、技术文档的完整内容和结构信息
+    - 识别图像中的文字(OCR)、物体、场景、图表元素
+    - 分析数据可视化图表、截图、设计稿
+    - 提取Excel表格的数据概览、统计信息、多工作表内容
     
     支持格式:
-    - PDF文档
-    - Word文档(.docx)
-    - 图像文件(JPG、PNG、BMP、GIF、WEBP等)
+    - PDF文档 (.pdf)
+    - Word文档 (.docx)
+    - 图像文件 (JPG、PNG、BMP、GIF、WEBP等)
+    - 数据文件 (Excel .xlsx/.xls, CSV .csv等)
     
-    注意:此工具专门处理文档和图像文件,支持本地路径和HTTP/HTTPS URL。
-    如果是数据库操作请使用route_to_data_explorer。
+    重要特性:
+    - 所有工具都支持本地文件路径和HTTP/HTTPS URL
+    - 上传文件URL格式: http://localhost:5000/files/文件名
+    - 自动启用视觉模型分析图像，获得更深入的内容理解
+    - Excel文件支持多工作表解析和数据统计
+    
+    注意:此工具专门处理文档、图像和数据文件的内容解析与分析。
+    如果需要对数据库进行SQL查询或数据探索，请使用route_to_data_explorer。
     """
     return f"ROUTE:Agent_File_Analysis|{reason}|{file_type}|{analysis_goal}"
 
