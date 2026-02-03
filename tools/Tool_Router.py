@@ -16,8 +16,8 @@ class RouteToReporter(BaseModel):
 class RouteToFileAnalyzer(BaseModel):
     """路由到文件分析Agent的参数"""
     reason: str = Field(description="为什么需要分析文件")
-    file_type: str = Field(description="文件类型:CSV/Excel/JSON/TXT等")
-    analysis_goal: str = Field(description="分析目标")
+    file_type: str = Field(description="文件类型:PDF/Word/图像等")
+    analysis_goal: str = Field(description="分析目标:内容提取/图表识别/文档理解等")
 
 class RouteToHTMLGen(BaseModel):
     """路由到HTML生成Agent的参数"""
@@ -64,17 +64,24 @@ def route_to_reporter(reason: str, visualization_type: str) -> str:
 @tool(args_schema=RouteToFileAnalyzer)
 def route_to_file_analyzer(reason: str, file_type: str, analysis_goal: str) -> str:
     """
-    当用户需要分析文件内容、读取文件数据时调用此工具。
+    当用户需要解析和分析PDF文档、Word文档或图像文件时调用此工具。
     
     适用场景:
-    - 读取和解析CSV、Excel文件
-    - 分析JSON、XML数据文件
-    - 处理文本文件
-    - 提取文件中的数据特征
-    - 文件格式转换
-    - 批量文件处理
+    - 解析PDF文档,提取文本、图像和表格内容
+    - 解析Word文档(.docx),提取文本、图像和表格,保留结构层次
+    - 分析图像文件,识别图表、截图、照片中的内容
+    - 使用视觉大模型理解文档中的图像和图表
+    - 提取学术论文、报告、合同等文档的完整内容
+    - 识别图像中的文字、物体、场景
+    - 分析数据可视化图表和截图
     
-    注意:此工具专门处理文件,如果是数据库操作请使用route_to_data_explorer。
+    支持格式:
+    - PDF文档
+    - Word文档(.docx)
+    - 图像文件(JPG、PNG、BMP、GIF、WEBP等)
+    
+    注意:此工具专门处理文档和图像文件,支持本地路径和HTTP/HTTPS URL。
+    如果是数据库操作请使用route_to_data_explorer。
     """
     return f"ROUTE:Agent_File_Analysis|{reason}|{file_type}|{analysis_goal}"
 
