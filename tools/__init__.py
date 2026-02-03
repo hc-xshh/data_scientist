@@ -8,6 +8,8 @@ from .Tool_Word_Parser import parse_word_document
 from .Tool_Image_Parser import parse_image_file
 from .Tool_PDF_Generator import generate_pdf_document, quick_pdf_generate, generate_document
 from .Tool_Word_Generator import generate_word_document, quick_word_generate
+from .Tool_RAG_Retr import (retrieve_from_ragflow, retrieve_with_metadata_filter, retrieve_by_author, retrieve_by_department, retrieve_by_date_range, 
+                            retrieve_with_multiple_conditions, compare_multiple_retrievals, check_ragflow_status, quick_rag_search)
 from .Tool_Data_Parser import parse_data_file
 
 __all__ = [
@@ -27,5 +29,14 @@ __all__ = [
     'generate_document',
     'generate_word_document',
     'quick_word_generate',
-    "parse_data_file"
+    "parse_data_file",
+    'retrieve_from_ragflow',
+    'retrieve_with_metadata_filter',
+    'retrieve_by_author',
+    'retrieve_by_department',
+    'retrieve_by_date_range',
+    'retrieve_with_multiple_conditions',
+    'compare_multiple_retrievals',
+    'check_ragflow_status',
+    'quick_rag_search'
 ]

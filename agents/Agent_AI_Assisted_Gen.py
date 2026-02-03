@@ -4,10 +4,17 @@
 from langchain.agents import create_agent
 from config import settings
 from models.Deepseek_Models import call_deepseek_chat
+from tools import generate_word_document, generate_pdf_document, generate_dashboard_html, quick_pdf_generate, generate_document, quick_word_generate
 from prompts import AIAssistedPrompt
+
+
+tools = [
+    generate_word_document, generate_pdf_document, generate_dashboard_html, quick_pdf_generate, generate_document, quick_word_generate
+]
 
 agent = create_agent(
     model=call_deepseek_chat(),
+    tools=tools,
     system_prompt=AIAssistedPrompt
 )
 

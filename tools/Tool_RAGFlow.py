@@ -56,3 +56,5 @@ def get_ragflow_answer(query: str) -> str:
             return "未找到相关答案"
     else:
         return f"请求失败，状态码：{response.status_code}"
+    
+

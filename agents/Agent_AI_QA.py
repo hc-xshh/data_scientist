@@ -4,10 +4,16 @@
 from langchain.agents import create_agent
 from config import settings
 from models.Deepseek_Models import call_deepseek_chat
+from tools import (retrieve_from_ragflow, retrieve_with_metadata_filter, retrieve_by_author, retrieve_by_department, retrieve_by_date_range, 
+                            retrieve_with_multiple_conditions, compare_multiple_retrievals, check_ragflow_status, quick_rag_search)
 from prompts import AIQAPrompt
+
+tools = [retrieve_from_ragflow, retrieve_with_metadata_filter, retrieve_by_author, retrieve_by_department, retrieve_by_date_range, 
+                            retrieve_with_multiple_conditions, compare_multiple_retrievals, check_ragflow_status, quick_rag_search]
 
 agent = create_agent(
     model=call_deepseek_chat(),
+    tools=tools,
     system_prompt=AIQAPrompt
 )
 
