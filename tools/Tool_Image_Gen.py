@@ -271,7 +271,8 @@ def image_gen_tool(prompt_text: str, model: str = "wan2.6-t2i", size: str = "128
                 safe_prompt = "professional business dashboard design, clean layout, modern UI"
                 
                 # 记录被拒绝的提示词用于分析
-                log_file = "rejected_prompts.log"
+                log_file = os.path.join("logs", "rejected_prompts.log")
+                os.makedirs("logs", exist_ok=True)
                 with open(log_file, "a", encoding="utf-8") as f:
                     f.write(f"[{datetime.now()}] 原始: {original_prompt}\n")
                     f.write(f"[{datetime.now()}] 清理后: {prompt_text}\n")
