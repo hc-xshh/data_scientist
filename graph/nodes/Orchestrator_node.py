@@ -233,7 +233,7 @@ def Orchestrator_node(state: AgentState) -> AgentState:
     # 步骤1: 预处理消息
     messages = state.get("messages", [])
     messages = message_process(messages)
-    
+    print("接收到的消息:", messages)
     # 步骤2: 构建系统提示和上下文
     system_prompt = OrchestratorPrompt
     context = build_context_message(state)
